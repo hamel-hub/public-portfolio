@@ -2,208 +2,206 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cyber Defense Campaign Mode</title>
+<title>Security+ Trainer</title>
 
 <style>
 body {
-margin:0;
-font-family:Arial;
-background:#020617;
-color:white;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
 }
 
-.header {
-padding:12px;
-background:#0f172a;
-text-align:center;
-}
-
-.panel {
-margin:10px;
-padding:12px;
-background:#111c33;
-border-radius:12px;
+.card {
+  background: #1e293b;
+  padding: 20px;
+  margin: 20px auto;
+  width: 80%;
+  border-radius: 12px;
 }
 
 button {
-margin:5px;
-padding:10px;
-border:none;
-border-radius:8px;
-background:#38bdf8;
-font-weight:bold;
-cursor:pointer;
+  padding: 10px;
+  margin: 5px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-button:hover {
-background:#0ea5e9;
+.option {
+  display: block;
+  margin: 10px auto;
+  width: 60%;
+  background: #334155;
+  color: white;
 }
 
-.choice {
-display:block;
-width:100%;
-margin:6px 0;
+.option:hover {
+  background: #475569;
 }
 
-.story {
-color:#93c5fd;
-}
+.correct { background: green !important; }
+.wrong { background: red !important; }
 </style>
+
 </head>
 
 <body>
 
-<div class="header">
-<h2>🎬 Cyber Defense Campaign Mode</h2>
-<div id="stats"></div>
+<h1>🛡 Security+ Trainer Game</h1>
+
+<div class="card">
+  <button onclick="setMode('quiz')">Quiz</button>
+  <button onclick="setMode('flash')">Flashcards</button>
+  <button onclick="nextQ()">Next</button>
+  <button onclick="restart()">Restart</button>
 </div>
 
-<div class="panel" id="storyBox"></div>
-
-<div class="panel" id="actionBox"></div>
+<div class="card">
+  <h2 id="question">Loading...</h2>
+  <div id="answers"></div>
+  <p id="score"></p>
+</div>
 
 <script>
+document.addEventListener("DOMContentLoaded", () => {
 
-let xp = 0;
-let stage = 0;
-let phase = "story"; // story or flashcard
+// ================= DATA =================
 
-const story = [
-"🏢 Nexus Cyber Defense Unit detects suspicious activity from ShadowByte.",
-"💀 ShadowByte launches phishing campaign targeting employees.",
-"🔥 Malware activity detected inside internal systems.",
-"⚠️ Possible ransomware preparation detected.",
-"🚨 Final breach attempt underway!"
+const bankBase = [
+  {
+    q:"What is phishing?",
+    a:"Social engineering attack using fake messages",
+    options:["Social engineering attack using fake messages","Firewall type","Encryption method","Virus scanner"]
+  },
+  {
+    q:"What does ransomware do?",
+    a:"Encrypts files and demands payment",
+    options:["Encrypts files and demands payment","Deletes logs","Boosts CPU","Opens firewall"]
+  },
+  {
+    q:"What is TLS used for?",
+    a:"Encrypts data in transit",
+    options:["Encrypts data in transit","Stores passwords","Detects malware","Blocks spam"]
+  },
+  {
+    q:"What is MFA?",
+    a:"Multiple authentication factors",
+    options:["Multiple authentication factors","Firewall rule","Encryption tool","Backup system"]
+  },
+  {
+    q:"What is RSA?",
+    a:"Asymmetric encryption algorithm",
+    options:["Asymmetric encryption algorithm","Hash function","Firewall","VPN protocol"]
+  }
 ];
 
-const incidents = [
-{
-q:"ShadowByte phishing emails detected. What do you do?",
-a:[
-["Block sender domain", 10],
-["Ignore emails", -10],
-["Enable MFA enforcement", 15]
-],
-ex:"Blocking domains + MFA reduces phishing success."
-},
-{
-q:"Suspicious malware detected. First action?",
-a:[
-["Isolate system", 15],
-["Open file", -20],
-["Ignore alert", -10]
-],
-ex:"Isolation prevents spread of malware."
-}
-];
+// ================= STATE =================
 
-const flashcards = [
-{
-q:"What does CIA stand for in cybersecurity?",
-a:["Confidentiality, Integrity, Availability","Control, Identity, Access","Cyber Intelligence Agency","Central Internet Access"],
-correct:0,
-ex:"CIA triad is a core security principle."
-},
-{
-q:"What is MFA?",
-a:["Multi-Factor Authentication","Main Firewall Access","Malware Filter Agent","Managed File Authorization"],
-correct:0,
-ex:"MFA uses multiple verification methods."
-},
-{
-q:"What is ransomware?",
-a:["Malware that encrypts files","Firewall tool","Backup system","VPN service"],
-correct:0,
-ex:"Ransomware locks data for ransom."
-}
-];
+let bank = [];
+let index = 0;
+let score = 0;
+let mode = "quiz";
 
-function updateStats(){
-document.getElementById("stats").innerText =
-`XP: ${xp} | Stage: ${stage+1} | Mode: ${phase}`;
+// expand to 400+
+function buildBank(){
+  let arr = [...bankBase];
+
+  while(arr.length < 420){
+    let b = bankBase[Math.floor(Math.random()*bankBase.length)];
+    arr.push({
+      q: b.q + " (scenario)",
+      a: b.a,
+      options: shuffle([...b.options])
+    });
+  }
+
+  return arr;
 }
 
-function load(){
-updateStats();
-
-if(phase === "story"){
-document.getElementById("storyBox").innerHTML =
-"<div class='story'>" + story[stage] + "</div>";
-
-document.getElementById("actionBox").innerHTML =
-"<button onclick='nextIncident()'>Continue Mission</button>";
+function shuffle(a){
+  return a.sort(()=>Math.random()-0.5);
 }
 
-if(phase === "incident"){
-let inc = incidents[stage % incidents.length];
+// ================= GAME =================
 
-document.getElementById("storyBox").innerHTML =
-"<b>🚨 Incident:</b><br>" + inc.q;
+function setMode(m){
+  mode = m;
+  show();
+}
 
-let box = document.getElementById("actionBox");
-box.innerHTML = "";
+function restart(){
+  index = 0;
+  score = 0;
+  bank = buildBank();
+  show();
+}
 
-inc.a.forEach(opt=>{
-let b = document.createElement("button");
-b.className = "choice";
-b.innerText = opt[0];
-b.onclick = ()=>{
-xp += opt[1];
-loadFlashcard();
-};
-box.appendChild(b);
+function nextQ(){
+  index++;
+  show();
+}
+
+// ================= UI =================
+
+function show(){
+
+  if(bank.length === 0) bank = buildBank();
+  if(index >= bank.length) index = 0;
+
+  const q = bank[index];
+
+  document.getElementById("question").innerText = q.q;
+
+  const ansDiv = document.getElementById("answers");
+  ansDiv.innerHTML = "";
+
+  document.getElementById("score").innerText =
+    `Score: ${score} | Question: ${index}`;
+
+  if(mode === "flash"){
+    ansDiv.innerHTML = `<h3>${q.a}</h3>`;
+    return;
+  }
+
+  q.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "option";
+    btn.innerText = opt;
+
+    btn.onclick = () => {
+      if(opt === q.a){
+        btn.classList.add("correct");
+        score++;
+      } else {
+        btn.classList.add("wrong");
+
+        ansDiv.innerHTML += `
+          <div class="card">
+            <h3>❌ Wrong</h3>
+            <p><b>Correct:</b> ${q.a}</p>
+            <p>Review this topic in Security+ exam material.</p>
+            <a href="https://www.youtube.com/results?search_query=security+plus+${q.q}"
+               target="_blank">▶ Watch Explanation</a>
+            <br><br>
+            <button onclick="show()">Continue</button>
+          </div>
+        `;
+      }
+
+      document.getElementById("score").innerText =
+        `Score: ${score} | Question: ${index}`;
+    };
+
+    ansDiv.appendChild(btn);
+  });
+}
+
+// init
+bank = buildBank();
+show();
+
 });
-}
-
-if(phase === "flashcard"){
-let card = flashcards[stage % flashcards.length];
-
-document.getElementById("storyBox").innerHTML =
-"<b>🧠 Training Flashcard:</b><br><br>" + card.q;
-
-let box = document.getElementById("actionBox");
-box.innerHTML = "";
-
-card.a.forEach((ans,i)=>{
-let b = document.createElement("button");
-b.className = "choice";
-b.innerText = ans;
-b.onclick = ()=>checkFlash(i,card);
-box.appendChild(b);
-});
-}
-}
-
-function nextIncident(){
-phase = "incident";
-load();
-}
-
-function loadFlashcard(){
-phase = "flashcard";
-load();
-}
-
-function checkFlash(i,card){
-if(i === card.correct){
-xp += 10;
-document.getElementById("storyBox").innerHTML =
-"✔ Correct!<br><br>" + card.ex;
-} else {
-document.getElementById("storyBox").innerHTML =
-"✘ Wrong<br><br>" + card.ex;
-}
-
-setTimeout(()=>{
-stage++;
-phase = "story";
-load();
-},1500);
-}
-
-load();
-
 </script>
 
 </body>
