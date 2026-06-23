@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Security+ Learning Game V1</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: white;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 700px;
+        margin: auto;
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+        color: #38bdf8;
+    }
+
+    .question {
+        font-size: 20px;
+        margin: 20px 0;
+    }
+
+    .answers button {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #334155;
+        color: white;
+        font-size: 16px;
+    }
+
+    .answers button:hover {
+        background: #475569;
+    }
+
+    .correct {
+        background: #16a34a !important;
+    }
+
+    .wrong {
+        background: #dc2626 !important;
+    }
+
+    .controls button {
+        margin: 10px;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #38bdf8;
+        color: black;
+        font-weight: bold;
+    }
+
+    .controls button:hover {
+        background: #0ea5e9;
+    }
+
+    .score {
+        margin-top: 10px;
+        font-size: 18px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Security+ Trainer Game V1</h1>
+
+    <div class="question" id="question">Loading...</div>
+
+    <div class="answers" id="answers"></div>
+
+    <div class="controls">
+        <button onclick="nextQuestion()">Next Question</button>
+        <button onclick="restartGame()">Restart</button>
+        <button onclick="exitGame()">Exit</button>
+    </div>
+
+    <div class="score" id="score"></div>
+</div>
+
+<script>
+const questions = [
+    {
+        q: "What does CIA stand for in cybersecurity?",
+        a: ["Confidentiality, Integrity, Availability", "Control, Identity, Access", "Cyber, Internet, Attack", "Central Intelligence Agency"],
+        correct: 0
+    },
+    {
+        q: "Which attack involves overwhelming a system with traffic?",
+        a: ["Phishing", "DoS/DDoS", "SQL Injection", "Spoofing"],
+        correct: 1
+    },
+    {
+        q: "What is multi-factor authentication (MFA)?",
+        a: ["One password only", "Using multiple passwords", "Two or more verification methods", "Biometric only"],
+        correct: 2
+    },
+    {
+        q: "Which is a form of malware?",
+        a: ["Firewall", "Antivirus", "Ransomware", "VPN"],
+        correct: 2
+    }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+function loadQuestion() {
+    answered = false;
+    const q = questions[current];
+    document.getElementById("question").innerText = q.q;
+
+    const answersDiv = document.getElementById("answers");
+    answersDiv.innerHTML = "";
+
+    q.a.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.innerText = answer;
+        btn.onclick = () => selectAnswer(btn, index);
+        answersDiv.appendChild(btn);
+    });
+
+    updateScore();
+}
+
+function selectAnswer(button, index) {
+    if (answered) return;
+    answered = true;
+
+    const q = questions[current];
+    const buttons = document.querySelectorAll(".answers button");
+
+    buttons.forEach((btn, i) => {
+        if (i === q.correct) btn.classList.add("correct");
+        else if (i === index) btn.classList.add("wrong");
+        btn.disabled = true;
+    });
+
+    if (index === q.correct) score++;
+    updateScore();
+}
+
+function nextQuestion() {
+    if (current < questions.length - 1) {
+        current++;
+        loadQuestion();
+    } else {
+        document.getElementById("question").innerText = "Game Complete!";
+        document.getElementById("answers").innerHTML = "";
+    }
+}
+
+function restartGame() {
+    current = 0;
+    score = 0;
+    loadQuestion();
+}
+
+function exitGame() {
+    document.body.innerHTML = "<h2 style='color:white;text-align:center;margin-top:50px;'>Game Closed</h2>";
+}
+
+function updateScore() {
+    document.getElementById("score").innerText =
+        "Score: " + score + " / " + questions.length;
+}
+
+loadQuestion();
+</script>
+
+</body>
+</html>
