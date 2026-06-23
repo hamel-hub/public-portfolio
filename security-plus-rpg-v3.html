@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security+ RPG Trainer V3</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #050b18;
+    color: white;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    background: #0f1a33;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+h1 { color: #38bdf8; }
+
+.sub {
+    color: #94a3b8;
+}
+
+.question {
+    font-size: 20px;
+    margin: 20px 0;
+}
+
+.answers button {
+    width: 100%;
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #1e2a4a;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.answers button:hover {
+    background: #334155;
+}
+
+.correct { background: #16a34a !important; }
+.wrong { background: #dc2626 !important; }
+
+.info {
+    margin-top: 10px;
+    padding: 10px;
+    background: #111c33;
+    border-radius: 8px;
+    min-height: 50px;
+}
+
+.stats {
+    margin-bottom: 10px;
+    color: #38bdf8;
+}
+
+.controls button {
+    margin: 5px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #38bdf8;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.controls button:hover {
+    background: #0ea5e9;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🛡 Security+ RPG Trainer V3</h1>
+<p class="sub">You are a Cybersecurity Analyst responding to live incidents</p>
+
+<div class="stats" id="stats"></div>
+
+<div class="question" id="question"></div>
+<div class="answers" id="answers"></div>
+
+<div class="info" id="info"></div>
+
+<div class="controls">
+    <button onclick="next()">Next Incident</button>
+    <button onclick="restart()">Restart</button>
+    <button onclick="endGame()">Exit</button>
+</div>
+
+</div>
+
+<script>
+
+let game = [
+{
+type:"phishing_attack",
+q:"🚨 Incident: Employees report fake login emails. What is BEST response?",
+a:[
+"Tell users to ignore emails",
+"Implement email filtering + user training",
+"Shut down internet",
+"Delete all emails manually"
+],
+correct:1,
+ex:"Email filtering + training reduces phishing success.",
+domain:"Threats"
+},
+
+{
+type:"ransomware",
+q:"🚨 Incident: Ransomware encrypted company files. What is FIRST action?",
+a:[
+"Pay ransom immediately",
+"Isolate infected systems",
+"Reinstall OS everywhere",
+"Ignore alert"
+],
+correct:1,
+ex:"Containment first prevents spread.",
+domain:"Risk"
+},
+
+{
+type:"iam",
+q:"🚨 Incident: Unauthorized login attempts detected. BEST control?",
+a:[
+"MFA implementation",
+"Disable all users",
+"Turn off firewall",
+"Use weaker passwords"
+],
+correct:0,
+ex:"MFA blocks unauthorized access even with stolen passwords.",
+domain:"IAM"
+},
+
+{
+type:"network",
+q:"🚨 Incident: Suspicious traffic detected. BEST tool?",
+a:[
+"IDS/IPS system",
+"Calculator",
+"Word processor",
+"Email client"
+],
+correct:0,
+ex:"IDS/IPS detects and prevents malicious traffic.",
+domain:"Network"
+},
+
+{
+type:"boss_final",
+boss:true,
+q:"🔥 FINAL INCIDENT: Company suffering repeated breaches. BEST long-term strategy?",
+a:[
+"React only after attacks",
+"Security awareness + patching + monitoring",
+"Turn off all systems",
+"Ignore logs"
+],
+correct:1,
+ex:"Layered defense + training + patching prevents recurrence.",
+domain:"Defense"
+}
+];
+
+let index = 0;
+let xp = 0;
+let correctCount = 0;
+let wrongMap = {};
+
+function updateStats(){
+document.getElementById("stats").innerHTML =
+`XP: ${xp} | Progress: ${index+1}/${game.length}`;
+}
+
+function load(){
+let q = game[index];
+
+document.getElementById("question").innerText =
+(q.boss ? "🔥 BOSS INCIDENT 🔥\n" : "") + q.q;
+
+let box = document.getElementById("answers");
+box.innerHTML = "";
+document.getElementById("info").innerText = "";
+
+q.a.forEach((ans,i)=>{
+let b = document.createElement("button");
+b.innerText = ans;
+b.onclick = ()=>pick(b,i);
+box.appendChild(b);
+});
+}
+
+function pick(btn,i){
+let q = game[index];
+let buttons = document.querySelectorAll(".answers button");
+
+buttons.forEach((b,j)=>{
+if(j===q.correct) b.classList.add("correct");
+else if(j===i) b.classList.add("wrong");
+b.disabled = true;
+});
+
+if(i === q.correct){
+xp += q.boss ? 40 : 15;
+correctCount++;
+document.getElementById("info").innerText =
+"✔ Incident handled correctly\n" + q.ex;
+} else {
+xp -= 5;
+wrongMap[q.domain] = (wrongMap[q.domain]||0)+1;
+document.getElementById("info").innerText =
+"✘ Incident response failed\n" + q.ex;
+}
+
+updateStats();
+}
+
+function next(){
+if(index < game.length - 1){
+index++;
+load();
+}else{
+showReport();
+}
+}
+
+function showReport(){
+let total = game.length;
+let acc = Math.round((correctCount/total)*100);
+
+let weak = Object.keys(wrongMap);
+let msg = `
+🎓 TRAINING COMPLETE
+
+Accuracy: ${acc}%
+XP: ${xp}
+
+Weak Areas:
+${weak.length ? weak.join(", ") : "None"}
+
+Recommendation:
+${acc < 70 ? "Review fundamentals + retry training" : "Ready for exam practice mode"}
+`;
+
+document.body.innerHTML =
+"<div style='color:white;text-align:center;margin-top:50px;font-family:Arial'>" +
+msg.replace(/\n/g,"<br>") +
+"</div>";
+}
+
+function restart(){
+location.reload();
+}
+
+function endGame(){
+document.body.innerHTML =
+"<h2 style='color:white;text-align:center;margin-top:50px;'>Session Ended</h2>";
+}
+
+updateStats();
+load();
+
+</script>
+
+</body>
+</html>
