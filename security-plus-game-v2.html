@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security+ Hybrid Trainer V2</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0b1220;
+    color: white;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+    background: #111c33;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+h1 { color: #38bdf8; }
+
+.question {
+    font-size: 20px;
+    margin: 20px 0;
+}
+
+.answers button {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #24324f;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.answers button:hover {
+    background: #334155;
+}
+
+.correct { background: #16a34a !important; }
+.wrong { background: #dc2626 !important; }
+
+.info {
+    margin-top: 10px;
+    padding: 10px;
+    background: #0f172a;
+    border-radius: 8px;
+    min-height: 40px;
+}
+
+.controls button {
+    margin: 8px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #38bdf8;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.controls button:hover {
+    background: #0ea5e9;
+}
+
+.stats {
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>Security+ Hybrid Trainer V2</h1>
+
+<div class="stats">
+    <p id="stats">Level: 1 | XP: 0</p>
+</div>
+
+<div class="question" id="question"></div>
+<div class="answers" id="answers"></div>
+
+<div class="info" id="info"></div>
+
+<div class="controls">
+    <button onclick="nextQuestion()">Next</button>
+    <button onclick="restartGame()">Restart</button>
+    <button onclick="exitGame()">Exit</button>
+</div>
+
+</div>
+
+<script>
+
+const questions = [
+{
+domain:"Threats",
+q:"What is phishing?",
+a:["Firewall type","Fake emails to steal info","Encryption method","VPN type"],
+correct:1,
+ex:"Phishing tricks users into giving sensitive data."
+},
+
+{
+domain:"IAM",
+q:"What does MFA add?",
+a:["One password","Extra verification steps","Faster login","No password needed"],
+correct:1,
+ex:"MFA uses 2 or more authentication factors."
+},
+
+{
+domain:"Network Security",
+q:"What does a firewall do?",
+a:["Encrypt files","Block unauthorized traffic","Store passwords","Speed up internet"],
+correct:1,
+ex:"Firewalls filter incoming and outgoing network traffic."
+},
+
+{
+domain:"Cryptography",
+q:"What is encryption?",
+a:["Hiding data using algorithms","Deleting data","Backing up files","Scanning viruses"],
+correct:0,
+ex:"Encryption converts data into unreadable form without a key."
+},
+
+{
+domain:"Risk",
+q:"What is risk?",
+a:["Guaranteed attack","Likelihood + impact of threat","Firewall rule","Antivirus scan"],
+correct:1,
+ex:"Risk combines probability and impact of a threat."
+},
+
+// BOSS QUESTION
+{
+domain:"BOSS",
+boss:true,
+q:"A company suffers repeated ransomware attacks. What is BEST long-term solution?",
+a:[
+"Pay attackers quickly",
+"Improve backup strategy + patching",
+"Disconnect all internet permanently",
+"Ignore incidents"
+],
+correct:1,
+ex:"Backups + patch management reduce ransomware impact long-term."
+}
+
+];
+
+let current = 0;
+let xp = 0;
+let level = 1;
+let answered = false;
+
+function updateStats(){
+document.getElementById("stats").innerText =
+`Level: ${level} | XP: ${xp}`;
+}
+
+function loadQuestion(){
+answered = false;
+let q = questions[current];
+
+document.getElementById("question").innerText =
+(q.boss ? "🔥 BOSS QUESTION 🔥\n" : "") + q.q;
+
+let answersDiv = document.getElementById("answers");
+answersDiv.innerHTML = "";
+
+document.getElementById("info").innerText = "";
+
+q.a.forEach((ans,i)=>{
+let btn = document.createElement("button");
+btn.innerText = ans;
+btn.onclick = ()=>selectAnswer(btn,i);
+answersDiv.appendChild(btn);
+});
+}
+
+function selectAnswer(btn,index){
+if(answered) return;
+answered = true;
+
+let q = questions[current];
+let buttons = document.querySelectorAll(".answers button");
+
+buttons.forEach((b,i)=>{
+if(i===q.correct) b.classList.add("correct");
+else if(i===index) b.classList.add("wrong");
+b.disabled = true;
+});
+
+if(index === q.correct){
+let gain = q.boss ? 30 : 10;
+xp += gain;
+document.getElementById("info").innerText =
+"✔ Correct! +" + gain + " XP\n" + q.ex;
+} else {
+document.getElementById("info").innerText =
+"✘ Wrong!\n" + q.ex;
+}
+
+if(xp >= 30 && level === 1) level = 2;
+if(xp >= 60 && level === 2) level = 3;
+if(xp >= 100 && level === 3) level = 4;
+
+updateStats();
+}
+
+function nextQuestion(){
+if(current < questions.length - 1){
+current++;
+loadQuestion();
+}else{
+document.getElementById("question").innerText =
+"🎉 Training Complete!";
+document.getElementById("answers").innerHTML = "";
+}
+}
+
+function restartGame(){
+current = 0;
+xp = 0;
+level = 1;
+updateStats();
+loadQuestion();
+}
+
+function exitGame(){
+document.body.innerHTML =
+"<h2 style='color:white;text-align:center;margin-top:50px;'>Game Closed</h2>";
+}
+
+updateStats();
+loadQuestion();
+
+</script>
+
+</body>
+</html>
